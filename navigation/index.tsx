@@ -19,8 +19,6 @@ import ProfileScreen from '../screens/ProfileScreen';
 import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
 import LinkingConfiguration from './LinkingConfiguration';
 import CollectionsScreen from '../screens/CollectionsScreen';
-import LoginModal from "../screens/LoginModal";
-import SignUpScreen from '../screens/SignUpScreen';
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
@@ -44,7 +42,6 @@ function RootNavigator() {
       <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
         <Stack.Screen name="Modal" component={ModalScreen} />
-        <Stack.Screen name={'Login'} component={LoginModal}   />
     </Stack.Navigator>
   );
 }
