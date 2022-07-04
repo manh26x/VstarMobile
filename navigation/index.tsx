@@ -3,12 +3,13 @@
  * https://reactnavigation.org/docs/getting-started
  *
  */
+
 import { FontAwesome } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
-import {ColorSchemeName, Pressable, StyleSheet, View} from 'react-native';
+import {ColorSchemeName, Pressable, StatusBar, StyleSheet, View} from 'react-native';
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
@@ -52,6 +53,8 @@ function RootNavigator() {
  */
 const BottomTab = createBottomTabNavigator<RootTabParamList>();
 
+
+
 function BottomTabNavigator() {
   const colorScheme = useColorScheme();
 
@@ -93,11 +96,25 @@ function BottomTabNavigator() {
       />
         <BottomTab.Screen
             name="Profile"
+
             component={ProfileScreen}
             options={({ navigation }: RootTabScreenProps<'Profile'>) => ({
                 tabBarShowLabel: false,
+                headerShown: false,
                 tabBarIcon: ({ focused }) => <TabBarIcon name="user-circle" color={Colors[colorScheme].tabIconDefault}
                                                          backgroundColor={focused? Colors[colorScheme].backgroundTabFocus : Colors[colorScheme].backgroundTab } />,
+                headerLeft: () => (
+                    <Pressable  onPress={() => navigation.navigate('Modal')}
+
+                                style={({ pressed }) => ({
+                                    opacity: pressed ? 0.5 : 1,
+                                })}><FontAwesome
+                        name="info-circle"
+                        size={15}
+                        color={Colors[colorScheme].text}
+                        style={{ marginRight: 15 }}
+                    /></Pressable>
+                ),
                 headerRight: () => (
                     <Pressable
                         onPress={() => navigation.navigate('Modal')}

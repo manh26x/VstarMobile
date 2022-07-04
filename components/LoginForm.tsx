@@ -1,51 +1,31 @@
 import React, {createRef, forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
+import * as SecureStore from 'expo-secure-store';
 import {
-    ActivityIndicator,
-    AsyncStorage,
-    Button, Keyboard,
+    Image, Keyboard,
     KeyboardAvoidingView,
-    Modal,
+    Modal, Pressable,
     ScrollView,
     StyleSheet, TextInput,
     TouchableOpacity
 } from 'react-native';
 import { Text, View } from './Themed';
 import  axiosClient  from '../constants/AxiosClient';
+import SignUpForm from "./SignUpForm";
+import Loader from "./Loader";
 
-const Loader = (props: { [x: string]: any; loading: any; }) => {
-    const {loading, ...attributes} = props;
-
-    return (
-        <Modal
-            transparent={true}
-            animationType={'none'}
-            visible={loading}
-            onRequestClose={() => {
-                console.log('close modal');
-            }}>
-            <View style={styles.modalBackground}>
-                <View style={styles.activityIndicatorWrapper}>
-                    <ActivityIndicator
-                        animating={true}
-                        color="#000000"
-                        size="large"
-                        style={styles.activityIndicator}
-                    />
-                </View>
-            </View>
-        </Modal>
-    );
-};
 const LoginForm = forwardRef((props: any, ref: any) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [userEmail, setUserEmail] = useState('');
     const [userPassword, setUserPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [errortext, setErrortext] = useState('');
-
+    const registerRef = useRef<any>();
     useImperativeHandle(ref, () => ({
         show: () => {
             setModalVisible(true);
+        },
+        hide: () => {
+            setModalVisible(false);
         }
     }));
 
@@ -54,7 +34,7 @@ const LoginForm = forwardRef((props: any, ref: any) => {
     const handleSubmitPress = () => {
         setErrortext('');
         if (!userEmail) {
-            alert('Please fill Email');
+            alert('Please fill Username');
             return;
         }
         if (!userPassword) {
@@ -64,35 +44,78 @@ const LoginForm = forwardRef((props: any, ref: any) => {
         setLoading(true);
         let dataToSend = {username: userEmail, password: userPassword};
         axiosClient.post<any>('/user/login', dataToSend)
-            .then(res => {
-                setLoading(false);
-                console.log(res);
+            .then(async (res:any) => {
+                await SecureStore.setItemAsync('access_token', res.access_token);
+                await SecureStore.setItemAsync('refresh_token', res.refresh_token);
+                await SecureStore.setItemAsync('user_name', userEmail);
+                setModalVisible(false);
+                props.fetchUser();
+
             })
-            .catch(err=> {
-                setLoading(false);
-                console.log(err);
-            })
+            .catch(async err => {
+                console.log('fail');
+                setErrortext('Please check your username and password!');
+                await SecureStore.setItemAsync('user_name', '');
+            }).finally(() => setLoading(false));
     }
 
 
+    let pageY = -1;
+    function moveTouch(evt:any) {
+        if(pageY === -1) {
+            pageY = evt.nativeEvent.pageY;
+        }else if(pageY < evt.nativeEvent.pageY) {
+            setModalVisible(false);
+        }else {
+            pageY = -1;
+        }
+        setTimeout(() => pageY = -1, 10);
+    }
 
     return (
         <Modal
+            style={{ height: '100%'}}
+
             animationType="slide"
             transparent={true}
             visible={modalVisible}
             onRequestClose={() => {
                 setModalVisible(!modalVisible)
             }}>
-            <View
-                style={{
-                    height: '75%',
-                    marginTop: 'auto',
-                    backgroundColor:'blue'
-                }}>
+            <Loader loading={loading} />
+<SignUpForm ref={registerRef}/>
+            <Pressable
 
+                style={{
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    height: '100%',
+                    marginTop: 'auto',
+                }}
+                onPress={() => setModalVisible(false)}
+            >
+                <Pressable
+                    onTouchMove={moveTouch}
+                    style={{
+                        backgroundColor: 'white',
+                        height: '85%',
+                        marginTop: 'auto',
+                        borderRadius: 20
+
+                    }}>
+                <Pressable
+    style={{
+        height: 2,
+        width: '50%',
+        alignSelf: "center",
+        position: 'absolute',
+
+    }}/>
+                    <View style={{display: "flex", justifyContent: 'center', alignItems: "center", marginTop: 30}}>
+                    <Image  source={require('../assets/images/logo.png')} />
+                    </View>
+                    <Text style={styles.title}>
+                    Login with Vstar account to enable all features</Text>
                 <View style={styles.mainBody}>
-                    <Loader loading={loading} />
                     <ScrollView
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={{
@@ -111,7 +134,7 @@ const LoginForm = forwardRef((props: any, ref: any) => {
                                         onChangeText={(UserEmail) =>
                                             setUserEmail(UserEmail)
                                         }
-                                        placeholder="Enter Email" //dummy@abc.com
+                                        placeholder="Enter your username" //dummy@abc.com
                                         placeholderTextColor="#8b9cb5"
                                         autoCapitalize="none"
                                         keyboardType="email-address"
@@ -152,14 +175,30 @@ const LoginForm = forwardRef((props: any, ref: any) => {
                                     onPress={handleSubmitPress}>
                                     <Text style={styles.buttonTextStyle}>LOGIN</Text>
                                 </TouchableOpacity>
+                                <View style={{
+                                    display: "flex",
+                                    flexDirection: "row",
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                <Text style={{ textAlign: 'center'}}>You don't have account?  </Text>
+                                    <Pressable  onPress={() => registerRef.current.show()}><Text style={{ color: '#0C3DE5FF'}}>Create one!</Text></Pressable>
+                                </View>
+                                <Pressable onPress={() => setModalVisible(!modalVisible)} style={{
+                                    display: 'flex',
+                                    alignItems:'center',
+                                    justifyContent: 'center',
+                                    marginTop: 20
+                                }}><Text style={{color:'#0C3DE5FF'}}>Skip for now</Text></Pressable>
 
                             </KeyboardAvoidingView>
+
                         </View>
                     </ScrollView>
                 </View>
 
-            </View>
-            <Button title={'skip for now'} onPress={() => setModalVisible(!modalVisible)}/>
+            </Pressable>
+            </Pressable>
         </Modal>
 
     );
@@ -167,45 +206,25 @@ const LoginForm = forwardRef((props: any, ref: any) => {
 export default LoginForm;
 
 const styles = StyleSheet.create({
-    modalBackground: {
-        flex: 1,
-        alignItems: 'center',
-        flexDirection: 'column',
-        justifyContent: 'space-around',
-        backgroundColor: '#00000040',
-    },
-    activityIndicatorWrapper: {
-        backgroundColor: '#FFFFFF',
-        height: 100,
-        width: 100,
-        borderRadius: 10,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-    },
-    activityIndicator: {
-        alignItems: 'center',
-        height: 80,
-    },
+
     mainBody: {
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: '#307ecc',
         alignContent: 'center',
     },
     SectionStyle: {
         flexDirection: 'row',
         height: 40,
-        marginTop: 20,
         marginLeft: 35,
+        fontSize: 'normal',
         marginRight: 35,
         margin: 10,
     },
     buttonStyle: {
-        backgroundColor: '#7DE24E',
+        backgroundColor: '#22c1c3',
         borderWidth: 0,
         color: '#FFFFFF',
-        borderColor: '#7DE24E',
+        borderColor: '#22c1c3',
         height: 40,
         alignItems: 'center',
         borderRadius: 30,
@@ -245,11 +264,12 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        height: 1110
     },
     title: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
+        textAlign: "center",
+        paddingTop: 20,
     },
     separator: {
         marginVertical: 30,
