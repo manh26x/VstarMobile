@@ -1,19 +1,39 @@
-import {Pressable, StyleSheet, Image, ScrollView, Modal} from 'react-native';
+import {Pressable, StyleSheet, Image, ScrollView, Clipboard, Dimensions} from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Text, View } from '../components/Themed';
 import {RootTabScreenProps} from "../types";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import LoginForm from "../components/LoginForm";
 import * as SecureStore from "expo-secure-store";
 import axiosClient from "../constants/AxiosClient";
 import Layout from "../constants/Layout";
 import SettingsModal from "../components/SettingsModal";
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import Constants from "../constants/Constants";
+import OnSaleTab from "../components/OnSaleTab";
+import CollectionTab from "../components/CollectionTab";
+import CreatedTab from "../components/CreatedTab";
+
+const initialLayout = { width: Dimensions.get('window').width };
 
 export default function ProfileScreen({ navigation, ...props }: RootTabScreenProps<'Profile'>) {
     const loginRef = useRef<any>();
     const settingsRef = useRef<any>();
+    const [copied, setCopied] = useState(false);
     const [user, setUser] = useState<any>(undefined);
     const [accessToken, setAccessToken] = useState<any>(null);
+    const [index, setIndex] = React.useState(0);
+    const [routes] = React.useState([
+        { key: 'onSales', title: 'On Sales' },
+        { key: 'collectibles', title: 'Collectibles' },
+        { key: 'created', title: 'Created' },
+    ]);
+
+    const renderScene = SceneMap({
+        onSales: OnSaleTab,
+        collectibles: CollectionTab,
+        created: CreatedTab
+    });
     const fetchUser = async () => {
         let at = await SecureStore.getItemAsync('access_token');
         setAccessToken(at);
@@ -34,9 +54,26 @@ export default function ProfileScreen({ navigation, ...props }: RootTabScreenPro
     useEffect( () => {
 
         fetchUser().then(() => console.log('user fetch!')).catch(err => console.error(err));
-    }, [user])
+    }, [])
   return (
     <View style={styles.container}>
+        {
+            user?
+            <View style={{position: 'absolute',top: 0, zIndex: 1001,  display: "flex",
+                padding: 20,
+                width: Dimensions.get('window').width,
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                backgroundColor:'rgba(0,0,0,0)',
+                flexDirection: 'row'}}>
+                <Pressable onPress={() => navigation.navigate('Modal')}  style={{backgroundColor: '#f5f5f5',  borderRadius: 100,}}>
+                    <Feather name="settings" size={24} color="black" style={{margin: 5}}
+                    /></Pressable>
+                <Pressable onPress={() => settingsRef.current.show()}  style={{backgroundColor: '#f5f5f5',  borderRadius: 100}}>
+                    <Feather name="more-horizontal" size={24} color="black" style={{margin: 5}}/></Pressable>
+            </View>: <></>
+        }
+
         {!user ?
         <>
             <Text style={styles.title}>Wallet not connected</Text>
@@ -60,58 +97,51 @@ export default function ProfileScreen({ navigation, ...props }: RootTabScreenPro
        <ScrollView>
            <SettingsModal fetchUser={fetchUser} ref={settingsRef}/>
            <View style={styles.header}>
-               <Pressable onPress={() => navigation.navigate('Modal')}  style={{backgroundColor: '#f5f5f5',  borderRadius: 100}}>
-                   <Feather name="settings" size={24} color="black" style={{margin: 5}}
-                           /></Pressable>
-               <Pressable onPress={() => settingsRef.current.show()}  style={{backgroundColor: '#f5f5f5',  borderRadius: 100}}>
-                   <Feather name="more-horizontal" size={24} color="black" style={{margin: 5}}/></Pressable>
+
            </View>
            <View style={styles.headerContent}>
                <Image style={styles.avatar}
-                      source={{uri: 'http://10.0.255.71:8030/public/'+user.avatarUrl}}/>
-               <Text style={styles.name}>{user.privateKey.substring(0,4)}...{user.privateKey.substring(user.privateKey.length-4)}</Text>
+                      source={user.avatarUrl ? {uri: Constants.BASE_URL + '/public/'+user.avatarUrl} : require('../assets/images/commonavt.jpg')}/>
+               <Text style={styles.name}>{user.privateKey.substring(0,6)}...{user.privateKey.substring(user.privateKey.length-4)}</Text>
+               <Pressable
+                   onPress={() => {
+                       Clipboard.setString(user.privateKey);
+                       setCopied(true);
+                       setTimeout(() => setCopied(false), 5000)
+                   }}
+                   style={{display: "flex", flexDirection: "row", alignItems: "center", marginTop: 10, backgroundColor: '#ccc', padding: 5,
+                       borderRadius: 15, paddingLeft: 10, paddingRight: 10}}>
+                   {copied ? <Text style={{fontWeight: 'normal'}}>Copied</Text> :
+                       <>
+                       <Image style={{width: 20, height: 20, marginRight: 10}} source={require('../assets/images/etherlogo.png')}/>
+                       <Text style={{fontWeight: 'normal'}}>{user.privateKey.substring(0, 6) + '...' + user.privateKey.substring(user.privateKey.length - 4)}</Text>
+                       </> }
 
-               {/*<Text style={styles.name}>{user.name}</Text>*/}
-               {/*<Text style={styles.userInfo}>{user.email}</Text>*/}
+                   </Pressable>
+               <Text  style={styles.name}>{user.name}</Text>
+               <Text  style={styles.bio}>{user.bio}</Text>
            </View>
-           {/*<View style={styles.body}>*/}
-           {/*    <View style={styles.item}>*/}
-           {/*        <View style={styles.iconContent}>*/}
-           {/*            <Image style={styles.icon} source={{uri: 'https://img.icons8.com/color/70/000000/cottage.png'}}/>*/}
-           {/*        </View>*/}
-           {/*        <View style={styles.infoContent}>*/}
-           {/*            <Text style={styles.info}>Home</Text>*/}
-           {/*        </View>*/}
-           {/*    </View>*/}
+           <TabView
+               navigationState={{ index, routes }}
 
-           {/*    <View style={styles.item}>*/}
-           {/*        <View style={styles.iconContent}>*/}
-           {/*            <Image style={styles.icon} source={{uri: 'https://img.icons8.com/color/70/000000/administrator-male.png'}}/>*/}
-           {/*        </View>*/}
-           {/*        <View style={styles.infoContent}>*/}
-           {/*            <Text style={styles.info}>Settings</Text>*/}
-           {/*        </View>*/}
-           {/*    </View>*/}
+               renderTabBar={props => (
+                   <TabBar
+                       {...props}
+               indicatorStyle={{backgroundColor: '#000'}}
 
-           {/*    <View style={styles.item}>*/}
-           {/*        <View style={styles.iconContent}>*/}
-           {/*            <Image style={styles.icon} source={{uri: 'https://img.icons8.com/color/70/000000/filled-like.png'}}/>*/}
-           {/*        </View>*/}
-           {/*        <View style={styles.infoContent}>*/}
-           {/*            <Text style={styles.info}>News</Text>*/}
-           {/*        </View>*/}
-           {/*    </View>*/}
-
-           {/*    <View style={styles.item}>*/}
-           {/*        <View style={styles.iconContent}>*/}
-           {/*            <Image style={styles.icon} source={{uri: 'https://img.icons8.com/color/70/000000/facebook-like.png'}}/>*/}
-           {/*        </View>*/}
-           {/*        <View style={styles.infoContent}>*/}
-           {/*            <Text style={styles.info}>Shop</Text>*/}
-           {/*        </View>*/}
-           {/*    </View>*/}
-
-           {/*</View>*/}
+                       renderLabel={({ route, focused, color }) => (
+                           <Text style={{ color: focused ? '#000': '#838383', margin: 8 }}>
+                               {route.title}
+                           </Text>
+                       )}
+                       style={{backgroundColor: 'white'}}
+                   />
+               )}
+               renderScene={renderScene}
+               onIndexChange={setIndex}
+               initialLayout={initialLayout}
+               style={{ height: 700 }}
+           />
        </ScrollView>}
 
     </View>
@@ -124,10 +154,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#e0e0e0",
         width: Layout.window.width,
         height: 145,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        flexDirection: 'row'
+
     },
     headerContent:{
         alignItems: 'center',
@@ -147,6 +174,11 @@ const styles = StyleSheet.create({
         fontSize:22,
         color:"#000000",
         fontWeight:'600',
+    },
+    bio:{
+        fontSize:18,
+        color:"#313131",
+        fontWeight:'300',
     },
     userInfo:{
         fontSize:16,
@@ -253,4 +285,8 @@ const styles = StyleSheet.create({
     height: 1,
     width: '80%',
   },
+
+    scene: {
+        flex: 1,
+    },
 });

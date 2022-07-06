@@ -48,8 +48,8 @@ const LoginForm = forwardRef((props: any, ref: any) => {
                 await SecureStore.setItemAsync('access_token', res.access_token);
                 await SecureStore.setItemAsync('refresh_token', res.refresh_token);
                 await SecureStore.setItemAsync('user_name', userEmail);
-                setModalVisible(false);
                 props.fetchUser();
+                setModalVisible(false);
 
             })
             .catch(async err => {
