@@ -12,6 +12,8 @@ import { Text, View } from './Themed';
 import  axiosClient  from '../constants/AxiosClient';
 import SignUpForm from "./SignUpForm";
 import Loader from "./Loader";
+import {map} from "rxjs";
+import Constants from "../constants/Constants";
 
 const LoginForm = forwardRef((props: any, ref: any) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -44,19 +46,20 @@ const LoginForm = forwardRef((props: any, ref: any) => {
         setLoading(true);
         let dataToSend = {username: userEmail, password: userPassword};
         axiosClient.post<any>('/user/login', dataToSend)
-            .then(async (res:any) => {
-                await SecureStore.setItemAsync('access_token', res.access_token);
-                await SecureStore.setItemAsync('refresh_token', res.refresh_token);
-                await SecureStore.setItemAsync('user_name', userEmail);
+            .subscribe((res:any) => {
+                Constants.REFRESH_TOKEN = res.refresh_token;
+                Constants.ACCESS_TOKEN =  userEmail;
+                Constants.ACCESS_TOKEN = res.access_token;
                 props.fetchUser();
                 setModalVisible(false);
-
-            })
-            .catch(async err => {
-                console.log('fail');
-                setErrortext('Please check your username and password!');
-                await SecureStore.setItemAsync('user_name', '');
-            }).finally(() => setLoading(false));
+            }, () => {
+            console.log('fail');
+            setErrortext('Please check your username and password!');
+                Constants.ACCESS_TOKEN = '';
+        },() => {
+                console.log('finished')
+                setLoading(false);
+            });
     }
 
 

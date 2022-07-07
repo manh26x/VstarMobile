@@ -1,10 +1,22 @@
 import { Text, View } from './Themed';
 import {Image} from "react-native";
-import NftItem from "./NftItem";
+import Constants from "../constants/Constants";
+import {useEffect, useState} from "react";
 
-export default function CollectionTab(collection: any){
-    // const listNft = collection.nfts.reduce((nft: any) => NftItem(nft));
+export default function CollectionTab({...props}){
+    const [collections, setCollections] = useState(props.collections);
+    const [collectionsView, setCollectionsView] = useState(undefined)
+    useEffect(() => {
+       setCollections(props.collections);
+
+        setCollectionsView(collections.map((collection: any) =>
+            <View><Image style={{width: 100, height: 100}} source={{uri: ''+Constants.API_PUBLIC_URL + collection.cid}} />
+                <Text>{collection.collectionName}</Text>
+                <Text>{collection.description}</Text></View>))
+    }, [])
     return (
-          <View style={{ backgroundColor: 'green'}}><Text>This is Collection Tab</Text></View>
+        <>
+            {collectionsView }
+        </>
     );
 }

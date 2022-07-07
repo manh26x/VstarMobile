@@ -15,6 +15,7 @@ import SignUpForm from "./SignUpForm";
 import Loader from "./Loader";
 import { AntDesign } from '@expo/vector-icons';
 import * as SecureStore from "expo-secure-store";
+import Constants from "../constants/Constants";
 const SettingsModal = forwardRef((props: any, ref: any) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [userEmail, setUserEmail] = useState('');
@@ -49,11 +50,12 @@ const SettingsModal = forwardRef((props: any, ref: any) => {
     }
 
     async function handleLogout() {
-        await SecureStore.setItemAsync('refresh_token', '');
-        await SecureStore.setItemAsync('access_token', '');
-        await SecureStore.setItemAsync('user_name', '');
-        setModalVisible(false);
+        Constants.ACCESS_TOKEN = '';
+        Constants.USER_NAME = '';
+        Constants.REFRESH_TOKEN = '';
         props.fetchUser();
+        setModalVisible(false);
+
     }
 
     return (
