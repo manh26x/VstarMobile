@@ -53,15 +53,13 @@ const SignUpForm = forwardRef((props: any, ref: any) => {
         setLoading(true);
         let dataToSend = {username: userEmail, password: userPassword, privateKey: privateKey};
         axiosClient.post<any>('/user/sign-up', dataToSend)
-            .then(async (res:any) => {
+            .subscribe(async (res:any) => {
                 ToastAndroid.show(res.message, 2000);
                 setShowForm(false);
-
-            })
-            .catch(err=> {
+            }, err=> {
                 console.log('fail');
                 setErrortext(err.message);
-            }).finally(() => setLoading(false));
+            }, () => setLoading(false));
     }
 
     return (

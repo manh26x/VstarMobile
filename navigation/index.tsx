@@ -20,6 +20,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
 import LinkingConfiguration from './LinkingConfiguration';
 import CollectionsScreen from '../screens/CollectionsScreen';
+import CollectionDetailModal from '../screens/CollectionDetailModal';
+import NftDetailModal from '../screens/NftDetailModal';
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
@@ -43,6 +45,8 @@ function RootNavigator() {
       <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
         <Stack.Screen name="Modal" component={ModalScreen} />
+        <Stack.Screen name="CollectionDetail" component={CollectionDetailModal} options={{ title: 'Collection Detail'}} />
+        <Stack.Screen name="NftDetail" component={NftDetailModal} options={{ title: 'NFT Detail'}} />
     </Stack.Navigator>
   );
 }

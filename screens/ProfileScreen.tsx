@@ -4,7 +4,6 @@ import { Text, View } from '../components/Themed';
 import {RootTabScreenProps} from "../types";
 import React, {useEffect, useRef, useState} from "react";
 import LoginForm from "../components/LoginForm";
-import * as SecureStore from "expo-secure-store";
 import axiosClient from "../constants/AxiosClient";
 import Layout from "../constants/Layout";
 import SettingsModal from "../components/SettingsModal";
@@ -13,6 +12,7 @@ import Constants from "../constants/Constants";
 import OnSaleTab from "../components/OnSaleTab";
 import CollectionTab from "../components/CollectionTab";
 import CreatedTab from "../components/CreatedTab";
+import {map} from "rxjs";
 
 const initialLayout = { width: Dimensions.get('window').width };
 
@@ -21,55 +21,79 @@ export default function ProfileScreen({ navigation, ...props }: RootTabScreenPro
     const settingsRef = useRef<any>();
     const [copied, setCopied] = useState(false);
     const [user, setUser] = useState<any>(undefined);
-    const [accessToken, setAccessToken] = useState<any>(null);
+    const [collections, setCollections] = useState<any>(null);
     const [index, setIndex] = React.useState(0);
-    const [routes] = React.useState([
+    const [routes, setRoutes] = useState([
         { key: 'onSales', title: 'On Sales' },
         { key: 'collectibles', title: 'Collectibles' },
         { key: 'created', title: 'Created' },
     ]);
 
-    const renderScene = SceneMap({
-        onSales: OnSaleTab,
-        collectibles: CollectionTab,
-        created: CreatedTab
-    });
-    const fetchUser = async () => {
-        let at = await SecureStore.getItemAsync('access_token');
-        setAccessToken(at);
-        console.log('accessToken', accessToken);
+    const renderScene = ({route} ) => {
+        switch (route.key) {
+            case 'onSales':
+                return <OnSaleTab/>;
+            case 'collectibles':
+                return <CollectionTab collections={collections} navigation={navigation}/>;
+            case 'created':
+                return <CreatedTab />;
+            default:
+                return <Text>Default</Text>
+        }
+    };
 
-        if(!accessToken || accessToken === '') {
+
+    const fetchUser = () => {
+        console.log('accessToken',    Constants.ACCESS_TOKEN);
+
+        if(!Constants.ACCESS_TOKEN || Constants.ACCESS_TOKEN === '') {
             setUser(undefined);
         } else {
-            axiosClient.get('/user/profile/info', {headers: {Authorization: `Bearer ${accessToken}`}}).then(res => {
+            axiosClient.get('/user/profile/info', {headers: {Authorization: `Bearer ${Constants.ACCESS_TOKEN}`}})
+                .pipe(map((user:any) => {
+                    if(user.myCollections ) {
+                        user.myCollections.forEach((collection:any) => {
+                            if(collection.nfts) {
+                                collection.nftImages = [];
+                                collection.nftImages.push(collection.cid);
+                                collection.nfts.forEach((nft:any) => collection.nftImages.push(nft.cid));
+                            }
+                        })
+                    }
+                    return user;
+                }))
+                .subscribe((res:any) => {
                 console.log(res);
+                setCollections(res.myCollections)
                 setUser(res);
-            }).catch(err => {
-                console.error(err);
-                setUser(undefined);
-            })
+            },err => {
+                    console.error(err);
+                    setUser(undefined);
+                });
         }
     }
     useEffect( () => {
 
-        fetchUser().then(() => console.log('user fetch!')).catch(err => console.error(err));
+        fetchUser();
     }, [])
   return (
     <View style={styles.container}>
         {
             user?
-            <View style={{position: 'absolute',top: 0, zIndex: 1001,  display: "flex",
-                padding: 20,
+
+                <View style={{position: 'absolute',top: 0, zIndex: 1001,  display: "flex",
+                padding: 25,
                 width: Dimensions.get('window').width,
                 justifyContent: "space-between",
                 alignItems: "flex-start",
                 backgroundColor:'rgba(0,0,0,0)',
                 flexDirection: 'row'}}>
-                <Pressable onPress={() => navigation.navigate('Modal')}  style={{backgroundColor: '#f5f5f5',  borderRadius: 100,}}>
+                    <SettingsModal fetchUser={fetchUser} ref={settingsRef} />
+
+                <Pressable onPress={() => settingsRef.current.show()}   style={{backgroundColor: '#f5f5f5',  borderRadius: 100,}}>
                     <Feather name="settings" size={24} color="black" style={{margin: 5}}
                     /></Pressable>
-                <Pressable onPress={() => settingsRef.current.show()}  style={{backgroundColor: '#f5f5f5',  borderRadius: 100}}>
+                <Pressable onPress={() => navigation.navigate('Modal')} style={{backgroundColor: '#f5f5f5',  borderRadius: 100}}>
                     <Feather name="more-horizontal" size={24} color="black" style={{margin: 5}}/></Pressable>
             </View>: <></>
         }
@@ -95,13 +119,12 @@ export default function ProfileScreen({ navigation, ...props }: RootTabScreenPro
             }}>Login</Text></Pressable>
         </>:
        <ScrollView>
-           <SettingsModal fetchUser={fetchUser} ref={settingsRef}/>
            <View style={styles.header}>
 
            </View>
            <View style={styles.headerContent}>
                <Image style={styles.avatar}
-                      source={user.avatarUrl ? {uri: Constants.BASE_URL + '/public/'+user.avatarUrl} : require('../assets/images/commonavt.jpg')}/>
+                      source={user.avatarUrl ? {uri: Constants.API_PUBLIC_URL+user.avatarUrl} : require('../assets/images/commonavt.jpg')}/>
                <Text style={styles.name}>{user.privateKey.substring(0,6)}...{user.privateKey.substring(user.privateKey.length-4)}</Text>
                <Pressable
                    onPress={() => {
@@ -128,7 +151,6 @@ export default function ProfileScreen({ navigation, ...props }: RootTabScreenPro
                    <TabBar
                        {...props}
                indicatorStyle={{backgroundColor: '#000'}}
-
                        renderLabel={({ route, focused, color }) => (
                            <Text style={{ color: focused ? '#000': '#838383', margin: 8 }}>
                                {route.title}
@@ -140,7 +162,7 @@ export default function ProfileScreen({ navigation, ...props }: RootTabScreenPro
                renderScene={renderScene}
                onIndexChange={setIndex}
                initialLayout={initialLayout}
-               style={{ height: 700 }}
+               style={{ height: 500}}
            />
        </ScrollView>}
 

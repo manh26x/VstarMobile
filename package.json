@@ -19,6 +19,7 @@
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
     "axios": "^0.27.2",
+    "axios-observable": "^1.5.0",
     "expo": "~45.0.0",
     "expo-asset": "~8.5.0",
     "expo-constants": "~13.1.1",
@@ -36,7 +37,8 @@
     "react-native-safe-area-context": "4.2.4",
     "react-native-screens": "~3.11.1",
     "react-native-tab-view": "^3.1.1",
-    "react-native-web": "0.17.7"
+    "react-native-web": "0.17.7",
+    "rxjs": "^7.5.5"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
