@@ -2,13 +2,36 @@ import { StyleSheet } from 'react-native';
 
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
+import React, {useEffect, useState} from "react";
+import axiosClient from "../constants/AxiosClient";
+import CollectionTab from "../components/CollectionTab";
+import {RootTabScreenProps} from "../types";
+import {map} from "rxjs";
+import Layout from "../constants/Layout";
 
-export default function TabTwoScreen() {
+export default function CollectionsScreen({ navigation, ...props }: RootTabScreenProps<'Collections'>) {
+  const [collections, setCollections] = useState<any>([])
+  useEffect(() => {
+    axiosClient.get('/nft/collection')
+        .pipe(map((collections:any) => {
+          if(collections ) {
+            collections.forEach((collection:any) => {
+              if(collection?.nfts) {
+                collection.nftImages = [];
+                collection.nftImages.push(collection.cid);
+                collection.nfts.forEach((nft:any) => collection.nftImages.push(nft.cid));
+              }
+            })
+          }
+          return collections;
+        })).subscribe(res => {
+      setCollections(res);
+    });
+  }, [])
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Collections</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="/screens/TabTwoScreen.tsx" />
+      <CollectionTab collections={collections} navigation={navigation}/>
     </View>
   );
 }
@@ -18,6 +41,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    width: Layout.window.width
   },
   title: {
     fontSize: 20,
@@ -26,6 +50,5 @@ const styles = StyleSheet.create({
   separator: {
     marginVertical: 30,
     height: 1,
-    width: '80%',
   },
 });

@@ -2,6 +2,8 @@ import { Text, View } from './Themed';
 
 export default function  CreatedTab () {
     return (
-          <View style={{ backgroundColor: 'blue'}}><Text>This is Created Tab</Text></View>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center"}}>
+              <Text style={{fontSize: 18}}>Oops! It's look like nothing</Text>
+          </View>
     );
 }

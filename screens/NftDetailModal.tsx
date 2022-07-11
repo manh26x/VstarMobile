@@ -30,9 +30,10 @@ export default function NftDetailModal({...props}) {
                        source={{uri: Constants.API_PUBLIC_URL +  nft.cid}} />
                     <View>
                         <View style={{display: "flex", flexDirection: "row", marginTop: 10 }}>
-                            <Image style={{height: 40, width: 40, borderRadius: 100, marginRight: 10}} source={{uri: Constants.API_PUBLIC_URL + user?.avatarUrl}} />
+                            <Image style={{height: 40, width: 40, borderRadius: 100, marginRight: 10}} source={user? {uri: Constants.API_PUBLIC_URL + user?.avatarUrl} :
+                            require('../assets/images/commonavt.jpg')} />
                             <View style={{display: "flex", justifyContent: "flex-start", alignItems: "center"}}>
-                                <Text style={{ fontWeight: 'bold', fontSize: 18}}>{user?.name}</Text>
+                                <Text style={{ fontWeight: 'bold', fontSize: 18}}>{user?.name || 'Anonymous'}</Text>
                                 <Text style={{ fontWeight: 'normal', fontSize: 14, color: '#888888'}}>Owner</Text>
                         </View>
 

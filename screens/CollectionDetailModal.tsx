@@ -1,11 +1,12 @@
 import {Text, View} from "../components/Themed";
-import {FlatList, Image, Platform, Pressable, ScrollView, StyleSheet} from "react-native";
+import {FlatList, Image, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet} from "react-native";
 import {useEffect, useState} from "react";
 import axiosClient from "../constants/AxiosClient";
 import Loader from "../components/Loader";
 import Constants from "../constants/Constants";
 import Layout from "../constants/Layout";
 const sizeThum = (Layout.window.width-40)/2 - 20;
+
 
 export default function CollectionDetailModal({route, navigation})  {
     const [collectionId, setCollectionId] = useState(route.params?.collectionId);
@@ -21,9 +22,11 @@ export default function CollectionDetailModal({route, navigation})  {
     }, [])
 
     return (
-        <View style={styles.container}>{collection?
+
+    <SafeAreaView style={styles.container}>
+        <Loader loading={loading} />
+        {collection?
             <>
-                <Loader loading={loading} />
                 <ScrollView >
                     <View style={{backgroundColor: '#ccc', height: 125}}>
                     </View>
@@ -34,18 +37,22 @@ export default function CollectionDetailModal({route, navigation})  {
                         <Text style={styles.description} >{collection.description}</Text>
                         </View>
                         <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-                        <View >
+                        <ScrollView >
                             <Text style={styles.title}>Items</Text>
                             {collection.nfts.length > 0 ?
-                            <FlatList data={collection.nfts}  style={{paddingRight: 10, paddingBottom: 30, marginTop: 20}} numColumns={2} keyExtractor={nft => nft._id} renderItem={({item}) =>
-                                <Pressable onPress={() => navigation.navigate('NftDetail', {nft: item._id, collectionName: collection?.collectionName})} style={styles.nftThum} horizontal={true}>
-                              <Image style={styles.thum}  source={{uri: Constants.API_PUBLIC_URL+ item.cid}}/>
-                                <Text numberOfLines={1} ellipsizeMode='tail' style={{ flex: 1, width: sizeThum, fontWeight: "bold", fontSize: 16}}>{item.name}</Text>
-                                    <Text style={styles.price}> {item.price} ETH</Text>
-                                </Pressable>
-                            } />
+                                    <View>
+                                    <FlatList
+                                        data={collection.nfts}  style={{paddingRight: 10, paddingBottom: 30, marginTop: 20}} numColumns={2} keyExtractor={nft => nft._id} renderItem={({item}) =>
+                                        <Pressable onPress={() => navigation.navigate('NftDetail', {nft: item._id, collectionName: collection?.collectionName})} style={styles.nftThum} horizontal={true}>
+                                            <Image style={styles.thum}  source={{uri: Constants.API_PUBLIC_URL+ item.cid}}/>
+                                            <Text numberOfLines={1} ellipsizeMode='tail' style={{ flex: 1, width: sizeThum, fontWeight: "bold", fontSize: 16}}>{item.name}</Text>
+                                            <Text style={styles.price}> {item.price} ETH</Text>
+                                        </Pressable>
+                                    } />
+                                    </View>
+
                                 : <Text>Oops! It's look like empty!</Text>}
-                        </View>
+                        </ScrollView>
                     </View>
 
                 </ScrollView>
@@ -55,13 +62,13 @@ export default function CollectionDetailModal({route, navigation})  {
             </>
             :<Text>Oops! Some thing when wrong!</Text>
         }
-    </View>
+    </SafeAreaView>
 );
 }
 
 const styles = StyleSheet.create({
     container: {
-
+        flex: 1
     },
     title: {
         fontSize: 24,

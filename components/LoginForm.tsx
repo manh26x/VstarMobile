@@ -48,7 +48,6 @@ const LoginForm = forwardRef((props: any, ref: any) => {
         axiosClient.post<any>('/user/login', dataToSend)
             .subscribe((res:any) => {
                 Constants.REFRESH_TOKEN = res.refresh_token;
-                Constants.ACCESS_TOKEN =  userEmail;
                 Constants.ACCESS_TOKEN = res.access_token;
                 props.fetchUser();
                 setModalVisible(false);

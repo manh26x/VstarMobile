@@ -1,4 +1,3 @@
-import axios from "axios";
 import Axios from  'axios-observable';
 import * as SecureStore from "expo-secure-store";
 import Constants from "./Constants";
@@ -13,18 +12,17 @@ const axiosClient = Axios.create({
 });
 
 setInterval(async () => {
-    let username = await SecureStore.getItemAsync('user_name');
-    if(username !== '') {
-        axiosClient.post('/user/refresh-token', {username: username, password: 'a'},{headers: {refresh_token: `${await SecureStore.getItemAsync('refresh_token')}`,
-                'Content-Type': 'application/json',}}).subscribe(async (res: any) => {
-            await SecureStore.setItemAsync('refresh_token', res.refresh_token);
-            await SecureStore.setItemAsync('access_token', res.access_token);
-        },err => {
-            SecureStore.setItemAsync('access_token', '');
-        });
+    let refresh_token = Constants.REFRESH_TOKEN;
+    if(refresh_token !== '') {
+        axiosClient.post('/user/refresh-token', {},{headers: {refresh_token: `${Constants.REFRESH_TOKEN}`}}).subscribe(async (res: any) => {
+            Constants.REFRESH_TOKEN = res.refresh_token;
+            Constants.ACCESS_TOKEN = res.access_token;
+        },() => {
+            Constants.ACCESS_TOKEN = '';
+        }, () => {});
     }
 
-}, 30000);
+}, 60000);
 // Add a response interceptor
 axiosClient.interceptors.response.use(
     (response) => {
@@ -33,7 +31,7 @@ axiosClient.interceptors.response.use(
         return response.data
     }
     , error => {
-        console.error( error.response);
+        console.error(JSON.stringify(error));
         return Promise.reject(error)
     }
 );
